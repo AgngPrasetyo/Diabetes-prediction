@@ -1,0 +1,39 @@
+{
+    "patient_input": {
+        "HighBP": 1,
+        "HighChol": 1,
+        "Smoker": 0,
+        "Stroke": 0,
+        "HeartDisease": 0,
+        "PhysActivity": 0,
+        "Alcohol": 0,
+        "Sex": 1,
+        "BMI": 32.5,
+        "GenHealth": 4,
+        "MentalHealth": 5,
+        "PhysicalHealth": 10,
+        "Age": 55,
+        "BMI_HighBP_Interaction": 32.5,
+        "Age_GenHealth_Interaction": 220
+    },
+    "feature_contributions": {
+        "HighBP": 0.3368124489788937,
+        "HighChol": 0.4601917433485377,
+        "Smoker": 0.028972043707732827,
+        "Stroke": -0.0005710947635076318,
+        "HeartDisease": -0.08516114899024158,
+        "PhysActivity": -0.004425920717415586,
+        "Alcohol": 0.12798691638318843,
+        "Sex": 0.18249943347438527,
+        "BMI": 0.41857962247971825,
+        "GenHealth": 0.9861272651830468,
+        "MentalHealth": -0.44958919242713846,
+        "PhysicalHealth": -0.5351413452326084,
+        "Age": -0.7415816748416735,
+        "BMI_HighBP_Interaction": 0.6630334100077732,
+        "Age_GenHealth_Interaction": 0.8737575652804874,
+        "GenHealth & MentalHealth": -0.022534360874735614,
+        "MentalHealth & PhysicalHealth": 0.11453236373757206
+    },
+    "total_risk_score_logit": 2.353488074734015
+}

@@ -1,0 +1,15 @@
+{
+    "HighBP": 1,
+    "HighChol": 1,
+    "Smoker": 0,
+    "Stroke": 0,
+    "HeartDisease": 0,
+    "PhysActivity": 0,
+    "Alcohol": 0,
+    "Sex": 1,
+    "BMI": 32.5,
+    "GenHealth": 4,
+    "MentalHealth": 5,
+    "PhysicalHealth": 10,
+    "Age": 55
+}

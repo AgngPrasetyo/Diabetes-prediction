@@ -1,0 +1,68 @@
+{
+    "model_type": "ngboost_smoteenn_fe_scaled",
+    "best_params": {
+        "col_sample": 0.9646290296864509,
+        "learning_rate": 0.028192619221266632,
+        "minibatch_frac": 0.9988053161276415,
+        "n_estimators": 2360
+    },
+    "best_threshold": 0.6430027506973638,
+    "metrics_test": {
+        "accuracy": 0.9104171649185144,
+        "precision": 0.9277964095482344,
+        "recall": 0.9025139128766072,
+        "f1_score": 0.9149805447470817,
+        "roc_auc": 0.9723137189370659
+    },
+    "classification_report": {
+        "0": {
+            "precision": 0.8916228132555825,
+            "recall": 0.9194778527427399,
+            "f1-score": 0.9053361253520109,
+            "support": 13636.0
+        },
+        "1": {
+            "precision": 0.9277964095482344,
+            "recall": 0.9025139128766072,
+            "f1-score": 0.9149805447470817,
+            "support": 15633.0
+        },
+        "accuracy": 0.9104171649185144,
+        "macro avg": {
+            "precision": 0.9097096114019084,
+            "recall": 0.9109958828096736,
+            "f1-score": 0.9101583350495464,
+            "support": 29269.0
+        },
+        "weighted avg": {
+            "precision": 0.9109436588889498,
+            "recall": 0.9104171649185144,
+            "f1-score": 0.9104873504845109,
+            "support": 29269.0
+        }
+    },
+    "confusion_matrix": {
+        "tn": 12538,
+        "fp": 1098,
+        "fn": 1524,
+        "tp": 14109
+    },
+    "features": [
+        "HighBP",
+        "HighChol",
+        "Smoker",
+        "Stroke",
+        "HeartDisease",
+        "PhysActivity",
+        "Alcohol",
+        "Sex",
+        "BMI",
+        "GenHealth",
+        "MentalHealth",
+        "PhysicalHealth",
+        "Age",
+        "BMI_HighBP_Interaction",
+        "Age_GenHealth_Interaction"
+    ],
+    "data_source": "preprocessed_smoteenn"
+}

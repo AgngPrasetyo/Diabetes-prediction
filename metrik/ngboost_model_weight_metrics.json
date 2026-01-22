@@ -1,0 +1,35 @@
+{
+    "best_params": {
+        "col_sample": 0.8000778765841015,
+        "learning_rate": 0.005992211559291217,
+        "minibatch_frac": 0.8469926038510867,
+        "n_estimators": 121
+    },
+    "best_threshold": 0.5722143276885301,
+    "metrics_test": {
+        "accuracy": 0.6703457058714282,
+        "precision": 0.3182997027009931,
+        "recall": 0.7532934131736527,
+        "f1_score": 0.44750767041664813,
+        "roc_auc": 0.7705570768108747
+    },
+    "features": [
+        "HighBP",
+        "HighChol",
+        "CholCheck",
+        "BMI",
+        "Smoker",
+        "Stroke",
+        "HeartDiseaseorAttack",
+        "PhysActivity",
+        "Fruits",
+        "Veggies",
+        "HvyAlcoholConsump",
+        "GenHlth",
+        "MentHlth",
+        "PhysHlth",
+        "DiffWalk",
+        "Sex",
+        "Age"
+    ]
+}

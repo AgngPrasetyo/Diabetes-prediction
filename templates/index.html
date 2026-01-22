@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>Sistem Prediksi Diabetes</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+
+<style>
+:root{
+    --primary:#1E5AA8;
+    --secondary:#F1F5F9;
+    --danger:#C0392B;
+    --success:#2E7D32;
+    --text:#2C3E50;
+    --muted:#64748B;
+    --border:#CBD5E1;
+}
+
+body{
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#1E5AA8,#3B82F6);
+    min-height:100vh;
+    padding:30px;
+}
+
+.container{
+    max-width:1200px;
+    margin:auto;
+    background:#fff;
+    border-radius:18px;
+    box-shadow:0 25px 70px rgba(0,0,0,.25);
+    overflow:hidden;
+}
+
+header{
+    background:linear-gradient(135deg,#1E5AA8,#3B82F6);
+    color:white;
+    padding:35px;
+    text-align:center;
+}
+
+main{padding:40px}
+
+h2{
+    margin-bottom:25px;
+    padding-bottom:10px;
+    border-bottom:3px solid var(--primary);
+    color:var(--text);
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:26px;
+}
+
+.form-group{
+    display:flex;
+    flex-direction:column;
+}
+
+label{
+    font-weight:600;
+    margin-bottom:6px;
+    color:var(--text);
+}
+
+small{
+    margin-top:6px;
+    color:var(--muted);
+    font-size:.85em;
+}
+
+input,select{
+    padding:12px;
+    border-radius:10px;
+    border:2px solid var(--border);
+    font-size:1em;
+    transition:.25s;
+}
+
+input:focus,select:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 3px rgba(30,90,168,.15);
+}
+
+input:hover,select:hover{
+    border-color:#93C5FD;
+}
+
+button{
+    margin-top:35px;
+    width:100%;
+    padding:17px;
+    font-size:1.15em;
+    font-weight:700;
+    border:none;
+    border-radius:14px;
+    cursor:pointer;
+    background:linear-gradient(135deg,#1E5AA8,#3B82F6);
+    color:white;
+    transition:all 0.3s ease;
+}
+
+button:hover{
+    opacity:.95;
+    transform:translateY(-1px);
+    box-shadow:0 5px 15px rgba(30,90,168,.3);
+}
+
+button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+}
+
+.hidden{display:none}
+
+/* ================= HASIL ================= */
+
+.result-box{
+    text-align:center;
+    padding:35px;
+    border-radius:16px;
+    margin-bottom:30px;
+    color:white;
+}
+
+.high{background:linear-gradient(135deg,#E03131,#C0392B)}
+.low{background:linear-gradient(135deg,#2E7D32,#1B5E20)}
+
+.prob{
+    font-size:3.2em;
+    font-weight:800;
+}
+
+
+.clinical-summary{
+    background:var(--secondary);
+    border-left:6px solid var(--primary);
+    padding:22px;
+    border-radius:12px;
+    margin-bottom:30px;
+}
+
+.clinical-summary h3{
+    margin-bottom:10px;
+    color:var(--primary);
+}
+
+.chart-note{
+    margin-top:15px;
+    font-size:.9em;
+    color:var(--muted);
+}
+
+.red-dot,.green-dot{
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    display:inline-block;
+    margin-right:6px;
+}
+.red-dot{background:var(--danger)}
+.green-dot{background:var(--success)}
+
+canvas{margin-top:25px}
+
+.loading{
+    text-align:center;
+    padding:20px;
+    color:var(--muted);
+}
+</style>
+</head>
+
+<body>
+<div class="container">
+
+<header>
+    <h1> Sistem Prediksi Diabetes</h1>
+    <p>NGBoost + Explainable Boosting Machine (EBM)</p>
+</header>
+
+<main>
+
+<!-- ================= INPUT ================= -->
+<section id="inputSection">
+<h2>Input Data Pasien</h2>
+
+<form id="predictForm">
+<div class="grid">
+
+<div class="form-group">
+    <label>Nama Pasien</label>
+    <input type="text" id="PatientName" placeholder="Masukkan nama pasien" required>
+    <small>Nama hanya untuk keperluan laporan</small>
+</div>
+
+
+<div class="form-group">
+<label>Tekanan Darah Tinggi</label>
+<select id="HighBP"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Riwayat hipertensi pasien</small>
+</div>
+
+<div class="form-group">
+<label>Kolesterol Tinggi</label>
+<select id="HighChol"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Kadar kolesterol melebihi batas normal</small>
+</div>
+
+<div class="form-group">
+<label>Perokok</label>
+<select id="Smoker"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Riwayat merokok ≥ 100 batang</small>
+</div>
+
+<div class="form-group">
+<label>Stroke</label>
+<select id="Stroke"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Riwayat stroke sebelumnya</small>
+</div>
+
+<div class="form-group">
+<label>Penyakit Jantung</label>
+<select id="HeartDisease"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Penyakit jantung koroner / serangan jantung</small>
+</div>
+
+<div class="form-group">
+<label>Aktivitas Fisik</label>
+<select id="PhysActivity"><option value="0">Tidak Aktif</option><option value="1">Aktif</option></select>
+<small>Aktivitas fisik 30 hari terakhir</small>
+</div>
+
+<div class="form-group">
+<label>Konsumsi Alkohol</label>
+<select id="Alcohol"><option value="0">Tidak</option><option value="1">Ya</option></select>
+<small>Konsumsi alkohol berat</small>
+</div>
+
+<div class="form-group">
+<label>Jenis Kelamin</label>
+<select id="Sex"><option value="0">Perempuan</option><option value="1">Laki-laki</option></select>
+<small>Jenis kelamin biologis</small>
+</div>
+
+<div class="form-group">
+<label>BMI</label>
+<input type="number" step="0.1" id="BMI" required>
+<small>Indeks massa tubuh (kg/m²)</small>
+</div>
+
+<div class="form-group">
+<label>Kesehatan Umum</label>
+<select id="GenHealth">
+<option value="1">Sangat Baik</option>
+<option value="2">Baik</option>
+<option value="3">Cukup</option>
+<option value="4">Buruk</option>
+<option value="5">Sangat Buruk</option>
+</select>
+<small>Penilaian kesehatan umum</small>
+</div>
+
+<div class="form-group">
+<label>Kesehatan Mental (hari)</label>
+<input type="number" id="MentalHealth" min="0" max="30" required>
+<small>Hari kesehatan mental buruk (30 hari)</small>
+</div>
+
+<div class="form-group">
+<label>Kesehatan Fisik (hari)</label>
+<input type="number" id="PhysicalHealth" min="0" max="30" required>
+<small>Hari sakit / cedera (30 hari)</small>
+</div>
+
+<div class="form-group">
+<label>Usia (kategori)</label>
+<select id="Age">
+<option value="1">18–24</option><option value="2">25–29</option>
+<option value="3">30–34</option><option value="4">35–39</option>
+<option value="5">40–44</option><option value="6">45–49</option>
+<option value="7">50–54</option><option value="8">55–59</option>
+<option value="9">60–64</option><option value="10">65–69</option>
+<option value="11">70–74</option><option value="12">75–79</option>
+<option value="13">80+</option>
+</select>
+<small>Kelompok usia pasien</small>
+</div>
+
+</div>
+
+<button type="submit"> Prediksi Risiko</button>
+</form>
+</section>
+
+<!-- ================= HASIL ================= -->
+<section id="resultSection" class="hidden">
+
+<h2>Hasil Prediksi</h2>
+
+<div id="resultBox" class="result-box">
+    <h3 id="riskLabel"></h3>
+    <div class="prob" id="riskProb"></div>
+</div>
+
+<div class="clinical-summary" id="aiExplanationBox" style="display:none">
+    <h3> Penjelasan Klinis Berbasis AI</h3>
+    <div class="loading" id="aiLoading" style="display:none">Memuat penjelasan AI...</div>
+    <p id="aiExplanationText"></p>
+</div>
+
+<div class="clinical-summary">
+    <h3>Interpretasi Klinis</h3>
+    <p id="clinicalText"></p>
+</div>
+
+<div class="clinical-summary">
+    <h3> Kesimpulan Klinis Singkat</h3>
+    <p id="clinicalConclusion"></p>
+</div>
+
+<div class="clinical-summary">
+    <h3> Faktor Utama (Statistik)</h3>
+    <ul id="mainCauseList"></ul>
+</div>
+
+<div class="clinical-summary">
+    <h3> Saran Tindak Lanjut</h3>
+    <ul id="followUpList"></ul>
+</div>
+
+<h2>Penjelasan Faktor Risiko (EBM)</h2>
+<canvas id="ebmChart"></canvas>
+
+<button onclick="exportPDFResult()"> Export PDF</button>
+<button onclick="resetForm()"> Input Data Baru</button>
+</section>
+
+</main>
+</div>
+
+<script>
+let ebmChart = null;
+let lastResult = null;
+let predictionReady = false;
+
+/* ===== SUBMIT FORM ===== */
+document.getElementById('predictForm').addEventListener("submit", function(e) {
+    e.preventDefault();
+    
+    // Ambil semua nilai input
+    const payload = {
+        PatientName: document.getElementById('PatientName').value.trim(),
+        HighBP: parseInt(document.getElementById('HighBP').value),
+        HighChol: parseInt(document.getElementById('HighChol').value),
+        Smoker: parseInt(document.getElementById('Smoker').value),
+        Stroke: parseInt(document.getElementById('Stroke').value),
+        HeartDisease: parseInt(document.getElementById('HeartDisease').value),
+        PhysActivity: parseInt(document.getElementById('PhysActivity').value),
+        Alcohol: parseInt(document.getElementById('Alcohol').value),
+        Sex: parseInt(document.getElementById('Sex').value),
+        BMI: parseFloat(document.getElementById('BMI').value),
+        GenHealth: parseInt(document.getElementById('GenHealth').value),
+        MentalHealth: parseInt(document.getElementById('MentalHealth').value),
+        PhysicalHealth: parseInt(document.getElementById('PhysicalHealth').value),
+        Age: parseInt(document.getElementById('Age').value)
+    };
+    
+    // Kirim ke backend
+    fetch("/predict", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        showResult(data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Terjadi kesalahan saat melakukan prediksi: ' + error.message);
+    });
+});
+
+/* ===== TAMPILKAN HASIL ===== */
+function showResult(d) {
+    
+    lastResult = d;
+    lastResult.patient_name = document.getElementById('PatientName').value.trim();
+    predictionReady = true;
+
+   
+    document.getElementById('inputSection').classList.add("hidden");
+    document.getElementById('resultSection').classList.remove("hidden");
+
+   
+    document.getElementById('riskProb').textContent = (d.risk_probability * 100).toFixed(2) + "%";
+    document.getElementById('riskLabel').textContent = d.risk_label;
+    
+    const resultBox = document.getElementById('resultBox');
+    resultBox.className = "result-box " + (d.risk_label.includes("High") ? "high" : "low");
+
+
+    document.getElementById('clinicalText').innerHTML = '<div class="loading">Memuat penjelasan klinis dari AI...</div>';
+    document.getElementById('clinicalConclusion').innerHTML = '<div class="loading">Memuat kesimpulan klinis dari AI...</div>';
+    document.getElementById('mainCauseList').innerHTML = '<div class="loading">Menganalisis faktor utama...</div>';
+    document.getElementById('followUpList').innerHTML = '<div class="loading">Menyiapkan saran tindak lanjut...</div>';
+
+    
+    drawEBM(d.ebm_contribution);
+
+    generateAIExplanation();
+}
+
+
+function generateAIExplanation() {
+    if (!predictionReady) {
+        alert("Belum ada hasil prediksi.");
+        return;
+    }
+
+    const aiExplanationBox = document.getElementById('aiExplanationBox');
+    const aiLoading = document.getElementById('aiLoading');
+    const aiExplanationText = document.getElementById('aiExplanationText');
+
+    aiExplanationBox.style.display = "block";
+    aiLoading.style.display = "block";
+    aiExplanationText.textContent = "";
+
+    fetch("/ai-explanation", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(lastResult)
+    })
+    .then(response => {
+        
+        console.log('Response status:', response.status);
+       
+        return response.json().then(data => {
+            return { status: response.status, data: data };
+        });
+    })
+    .then(result => {
+        aiLoading.style.display = "none";
+        
+        const { status, data } = result;
+        
+       
+        if (status !== 200 || data.error) {
+            console.error('API Error:', data);
+            aiExplanationText.innerHTML = `<strong>Terjadi kesalahan:</strong> ${data.error || 'Unknown error'}<br><small>Detail: ${data.details || data.raw_response || 'Tidak ada detail'}</small>`;
+         
+            showDefaultExplanations();
+            return;
+        }
+        
+  
+        document.getElementById('clinicalText').textContent = data.interpretasi_klinis || "Tidak ada interpretasi tersedia.";
+        
+        document.getElementById('clinicalConclusion').textContent = data.kesimpulan_klinis || "Tidak ada kesimpulan tersedia.";
+        
+        const mainCauseList = document.getElementById('mainCauseList');
+        mainCauseList.innerHTML = "";
+        
+        if (data.faktor_utama && data.faktor_utama.length > 0) {
+            data.faktor_utama.forEach((faktor, index) => {
+                const li = document.createElement('li');
+                li.textContent = faktor;
+                mainCauseList.appendChild(li);
+            });
+        } else {
+            mainCauseList.innerHTML = "<li>Tidak ada data faktor utama.</li>";
+        }
+        
+        const followUpList = document.getElementById('followUpList');
+        followUpList.innerHTML = "";
+        
+        if (data.saran_tindak_lanjut && data.saran_tindak_lanjut.length > 0) {
+            data.saran_tindak_lanjut.forEach((saran, index) => {
+                const li = document.createElement('li');
+                li.textContent = saran;
+                followUpList.appendChild(li);
+            });
+        } else {
+            followUpList.innerHTML = "<li>Tidak ada saran tersedia.</li>";
+        }
+        
+        aiExplanationText.textContent = data.penjelasan_ai_detail || "Tidak ada penjelasan detail tersedia.";
+    })
+    .catch(error => {
+        console.error('Fetch Error:', error);
+        aiLoading.style.display = "none";
+        aiExplanationText.innerHTML = `<strong>Terjadi kesalahan jaringan:</strong> ${error.message}<br><small>Pastikan server Flask berjalan dan API key Gemini sudah dikonfigurasi dengan benar.</small>`;
+        
+        showDefaultExplanations();
+    });
+}
+
+function showDefaultExplanations() {
+    const d = lastResult;
+    
+    let clinicalText = "";
+    if (d.clinical_adjustment) {
+        clinicalText = "Risiko telah disesuaikan berdasarkan kriteria protektif klinis. ";
+    }
+    clinicalText += d.risk_label.includes("High") 
+        ? "Probabilitas menunjukkan risiko tinggi. Diperlukan evaluasi medis lebih lanjut."
+        : "Probabilitas menunjukkan risiko rendah. Tetap jaga pola hidup sehat.";
+    
+    document.getElementById('clinicalText').textContent = clinicalText;
+
+    let conclusion = d.risk_label.includes("High")
+        ? "Pasien menunjukkan probabilitas risiko diabetes yang tinggi berdasarkan faktor-faktor yang dianalisis. Disarankan untuk konsultasi dengan dokter untuk pemeriksaan lebih lanjut."
+        : "Pasien menunjukkan probabilitas risiko diabetes yang rendah. Pertahankan pola hidup sehat dan lakukan pemeriksaan rutin.";
+    
+    document.getElementById('clinicalConclusion').textContent = conclusion;
+
+    const mainCauseList = document.getElementById('mainCauseList');
+    mainCauseList.innerHTML = "";
+    
+    const topFactors = Object.entries(d.ebm_contribution)
+        .filter(([key, value]) => Math.abs(value) > 0.05)
+        .slice(0, 5);
+    
+    topFactors.forEach(([factor, value]) => {
+        const li = document.createElement('li');
+        const direction = value > 0 ? "meningkatkan" : "menurunkan";
+        const dotClass = value > 0 ? "red-dot" : "green-dot";
+        li.innerHTML = `<span class="${dotClass}"></span><strong>${factor.replace(/_/g, " ")}</strong>: ${direction} risiko (kontribusi: ${value.toFixed(3)})`;
+        mainCauseList.appendChild(li);
+    });
+
+    const followUpList = document.getElementById('followUpList');
+    followUpList.innerHTML = "";
+    
+    const suggestions = d.risk_label.includes("High") 
+        ? [
+            "Konsultasi dengan dokter untuk pemeriksaan gula darah",
+            "Evaluasi dan kontrol faktor risiko yang teridentifikasi",
+            "Pertimbangkan perubahan gaya hidup (diet, olahraga)",
+            "Monitor tekanan darah dan kolesterol secara berkala"
+          ]
+        : [
+            "Pertahankan pola hidup sehat",
+            "Lakukan pemeriksaan kesehatan rutin",
+            "Jaga berat badan ideal",
+            "Tetap aktif secara fisik"
+          ];
+    
+    suggestions.forEach(text => {
+        const li = document.createElement('li');
+        li.textContent = text;
+        followUpList.appendChild(li);
+    });
+}
+
+
+function drawEBM(ebm) {
+    const labels = Object.keys(ebm).map(k => k.replace(/_/g, " "));
+    const values = Object.values(ebm);
+
+    if (ebmChart) ebmChart.destroy();
+
+    ebmChart = new Chart(document.getElementById("ebmChart"), {
+        type: "bar",
+        data: {
+            labels,
+            datasets: [{
+                data: values,
+                backgroundColor: values.map(v => v > 0 ? "#C0392B" : "#2E7D32")
+            }]
+        },
+        options: {
+            indexAxis: "y",
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Kontribusi: ' + context.parsed.x.toFixed(3);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: "Kontribusi Statistik terhadap Risiko Diabetes"
+                    }
+                }
+            }
+        }
+    });
+}
+
+function exportPDFResult() {
+    if (!lastResult) {
+        alert("Belum ada hasil prediksi.");
+        return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF("p", "mm", "a4");
+
+    let y = 15;
+
+    pdf.setFontSize(16);
+    pdf.text("Laporan Hasil Prediksi Diabetes", 14, y);
+    y += 10;
+
+    pdf.setFontSize(11);
+    pdf.text(`Nama Pasien      : ${lastResult.patient_name || "-"}`, 14, y); y += 7;
+    pdf.text(`Kategori Risiko  : ${lastResult.risk_label}`, 14, y); y += 7;
+    pdf.text(`Probabilitas     : ${(lastResult.risk_probability * 100).toFixed(2)}%`, 14, y); y += 10;
+
+    pdf.setFontSize(13);
+    pdf.text("Penjelasan Klinis Berbasis AI", 14, y);
+    y += 7;
+
+    pdf.setFontSize(10);
+    const aiText = pdf.splitTextToSize(
+        document.getElementById("aiExplanationText").textContent || "Tidak ada penjelasan AI.",
+        180
+    );
+    pdf.text(aiText, 14, y);
+    y += aiText.length * 5 + 5;
+
+    pdf.setFontSize(13);
+    pdf.text("Faktor Statistik Dominan (EBM)", 14, y);
+    y += 7;
+
+    pdf.setFontSize(10);
+    Object.entries(lastResult.ebm_contribution)
+        .slice(0, 5)
+        .forEach(([factor, value]) => {
+            pdf.text(
+                `• ${factor.replace(/_/g, " ")} : ${value.toFixed(3)}`,
+                16,
+                y
+            );
+            y += 6;
+        });
+
+    pdf.addPage();
+    pdf.setFontSize(14);
+    pdf.text("Visualisasi Kontribusi Faktor Risiko (EBM)", 14, 15);
+
+    const chartCanvas = document.getElementById("ebmChart");
+    const chartImage = chartCanvas.toDataURL("image/png", 1.0);
+
+    pdf.addImage(chartImage, "PNG", 10, 25, 190, 120);
+
+    pdf.save(`hasil_prediksi_${lastResult.patient_name || "pasien"}.pdf`);
+}
+
+function resetForm() {
+    document.getElementById('inputSection').classList.remove("hidden");
+    document.getElementById('resultSection').classList.add("hidden");
+    document.getElementById('predictForm').reset();
+    document.getElementById('aiExplanationBox').style.display = "none";
+    lastResult = null;
+    predictionReady = false;
+    
+    if (ebmChart) {
+        ebmChart.destroy();
+        ebmChart = null;
+    }
+}
+</script>
+
+</body>
+</html>
